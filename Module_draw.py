@@ -36,4 +36,5 @@ def draw(data):
     
 
     plotxyz.set_title('Spider Robot')
-    plotxyz.view_init(elev=20., azim=45)
+    #plotxyz.view_init(elev=20., azim=45)
+    plotxyz.view_init(elev=90., azim=45)
