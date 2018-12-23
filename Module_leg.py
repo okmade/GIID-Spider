@@ -15,7 +15,7 @@ class Leg():
         self.Q1cent=Q1cent
         self.movpfx=movpfx
         self.movpfy=movpfy
-        self.tpoints=tpoints
+        self.tpoints=tpoints/2
         self.estateactive=True
         if self.checklimits():
             self.disactive()
@@ -56,15 +56,15 @@ class Leg():
 
     def checklimits(self):
         self.updatexmov()
-        print(self.L1+self.L2)
-        print(math.sqrt((math.pow(self.altcodo,2)+
-        math.pow(self.pfx,2)+math.pow(self.xmovini,2))))
+        #print(self.L1+self.L2)
+        #print(math.sqrt((math.pow(self.altcodo,2)+
+        #math.pow(self.pfx,2)+math.pow(self.xmovini,2))))
 
-        print(math.sqrt((math.pow(self.altcodo,2)+
-        math.pow(self.pfx,2)+math.pow(self.xmovend,2))))
+        #print(math.sqrt((math.pow(self.altcodo,2)+
+        #math.pow(self.pfx,2)+math.pow(self.xmovend,2))))
 
-        print(math.sqrt((math.pow((self.altcodo-self.movpfy),2)+
-        math.pow(self.pfx,2)+math.pow((self.xinc * (self.tpoints/2)),2))))
+        #print(math.sqrt((math.pow((self.altcodo-self.movpfy),2)+
+        #math.pow(self.pfx,2)+math.pow((self.xinc * (self.tpoints/2)),2))))
 
         if ((self.L1 + self.L2) <= 
         math.sqrt((math.pow(self.altcodo,2)+
@@ -101,14 +101,20 @@ class Leg():
             movx = 0
         else:
             self.updatexmov()
-            movx = (self.xinc*point)+self.xmovini
+            if (point <= self.tpoints):
+                movx = (self.xinc*point)+self.xmovini
+            else:
+                movx = self.xmovend - (self.xinc*(point % self.tpoints))
             Q1 = (math.atan2(self.pfx,movx))*grad
             if math.sin(Q1*rad) == 0:
                 rob = 0
             else:
                 rob = self.pfx/math.sin(Q1*rad)
-            zob = (((-self.movpfy)/(math.pow((self.movpfx/2),2))*(math.pow(((movx-self.xmovini)-(self.movpfx/2)),2)))+self.movpfy)
-            ladoz = zob-self.altcodo
+            if (point <= self.tpoints):
+                zob = (((-self.movpfy)/(math.pow((self.movpfx/2),2))*(math.pow(((movx-self.xmovini)-(self.movpfx/2)),2)))+self.movpfy)
+                ladoz = zob-self.altcodo
+            else:
+                ladoz = -self.altcodo
 
             Hipotenusa = math.sqrt(math.pow(rob,2)+math.pow(ladoz,2))
             Alfa = (math.atan2(ladoz,rob))*grad
@@ -121,6 +127,18 @@ class Leg():
             Q3 = (Gamma-(180*rad))*grad
         return Q1,Q2,Q3,movx
 
+    def getanglesforservos(self,point):
+        Qa1,Qa2,Qa3,movxa=self.getangles(point)
+        if self.xpos == 2:
+            Qf1= -Qa1+135
+            Qf2= Qa2+90
+            Qf3= -Qa3
+        else:
+            Qf1= Qa1+45
+            Qf2= -Qa2+90
+            Qf3= Qa3+180
+        return Qf1,Qf2,Qf3
+		
     def getpointstodraw(self,point):
         global rad,grad
 
