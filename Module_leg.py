@@ -101,6 +101,9 @@ class Leg():
             movx = 0
         else:
             self.updatexmov()
+            if (point >= self.tpoints*2):
+                point = point % self.tpoints
+                
             if (point <= self.tpoints):
                 movx = (self.xinc*point)+self.xmovini
             else:
