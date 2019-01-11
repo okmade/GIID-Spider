@@ -96,8 +96,8 @@ class Leg():
         global rad,grad
         if self.estateactive == False:
             Q1 = 90
-            Q2 = 53
-            Q3 = -135
+            Q2 = 90
+            Q3 = 90
             movx = 0
         else:
             self.updatexmov()
@@ -133,13 +133,16 @@ class Leg():
     def getanglesforservos(self,point):
         Qa1,Qa2,Qa3,movxa=self.getangles(point)
         if self.xpos == 2:
-            Qf1= -Qa1+135
+            Qf1= -Qa1+180
             Qf2= Qa2+90
             Qf3= -Qa3
         else:
-            Qf1= Qa1+45
+            Qf1= Qa1
             Qf2= -Qa2+90
             Qf3= Qa3+180
+        #print ("Valor Qa1:",Qa1)
+        #print ("Valor Qf1:",Qf1)
+        #print ("      ")
         return Qf1,Qf2,Qf3
 		
     def getpointstodraw(self,point):
