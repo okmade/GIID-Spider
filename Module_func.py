@@ -56,7 +56,7 @@ sr3_1 = servo.Servo(pca1.channels[1])
 sr3_2 = servo.Servo(pca1.channels[2])
 sr3_3 = servo.Servo(pca1.channels[3])
 
-def Confinit():
+def set_pos_init():
     for i in range(0,16):
 	    servoall1 = servo.Servo(pca0.channels[i])
 	    servoall2 = servo.Servo(pca1.channels[i])
@@ -167,7 +167,7 @@ def go_left(vel):
         sl3_3.angle = v1 - 45
 
 def go_right(vel):
-    print("Run Left")
+    print("Run Right")
     for x in range(points_total-1,-1,-1):
         
         v1,v2,v3=alr1.getanglesforservos(x)

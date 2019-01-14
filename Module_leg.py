@@ -94,7 +94,7 @@ class Leg():
 
     def getangles(self,point):
         global rad,grad
-        if self.estateactive == False:
+        if self.estateactive == False:									#It's neccessary to check
             Q1 = 90
             Q2 = 90
             Q3 = 90
@@ -118,7 +118,6 @@ class Leg():
                 ladoz = zob-self.altcodo
             else:
                 ladoz = -self.altcodo
-
             Hipotenusa = math.sqrt(math.pow(rob,2)+math.pow(ladoz,2))
             Alfa = (math.atan2(ladoz,rob))*grad
             Beta = (math.acos(((math.pow(self.L1,2))+(math.pow(Hipotenusa,2))-(math.pow(self.L2,2)))/(2*self.L1*Hipotenusa)))*grad
