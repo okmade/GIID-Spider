@@ -35,13 +35,13 @@ def control_spider():
     while (IS_ACTIVE == 1):
         print ("Valor Task 2:   ", ANALOG_DIGITAL_CONTROL)
         if (ANALOG_DIGITAL_CONTROL == '1'):
-            for j in range(0,4):
+            for j in range(0,8):
                 go_front(15)
-            for j in range(0,4):
+            for j in range(0,8):
                 go_right(15)
-            for j in range(0,4):
+            for j in range(0,8):
                 go_left(15)
-            for j in range(0,4):
+            for j in range(0,8):
                 go_back(15)
 
 
