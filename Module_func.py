@@ -98,7 +98,7 @@ def go_front(vel):
         sl3_3.angle = v1 - 45
 
 def go_back(vel):
-    print("Run Revert")
+    #print("Run Revert")
     for x in range(points_total-1,-1,-1):
         v1,v2,v3=alr1.getanglesforservos(x)
         sr1_1.angle = v3

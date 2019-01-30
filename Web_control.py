@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from flask import Flask, render_template, Response, request
-#import picamera
 from camera_pi import Camera
 import cv2
 import socket
@@ -17,10 +16,6 @@ def index():
 def gen(camera):
     """Video streaming generator function."""
     while True:
-        #rval, frame = vc.read()
-        #cv2.imwrite('t.jpg', frame)
-        #yield (b'--frame\r\n'
-        #       b'Content-Type: image/jpeg\r\n\r\n' + open('t.jpg', 'rb').read() + b'\r\n')
         frame = camera.get_frame()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -51,4 +46,4 @@ def video_feed():
 
 
 if __name__ == '__main__':
-        app.run(host='0.0.0.0', debug=True, threaded=True)
+    app.run(host='0.0.0.0', debug=True, threaded=True)
