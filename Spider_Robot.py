@@ -28,38 +28,38 @@ app = Flask(__name__)
 global new_data_spider
 new_data_spider = False
 
+global spider_is_running
+spider_is_running = False
+
 global data_spider
 data_spider = ['N','N','N',512,512]
 #	data_spider[0] = "MODE", 'A' = Analogo, 'D' = Digital, 'N' = None
-#	data_spider[1] = If MODE == 'D',
-#	 					'N' = None, 'U' = Up, 'D' = Dowm, 'L' = Left, 'R' = Rigth, 'S' = Stop
-#					 If MODE == 'A', Left Joystick Vertical 0 to 1023
-#	data_spider[2] = If MODE == 'A', Left Joystick Horizontal 0 to 1023
+#	data_spider[1] = If MODE == 'D', 'N' = None, 'F' = Forward, 'B' = Back, 'L' = Left, 'R' = Rigth, 'S' = Stop
+#					 If MODE == 'A', Lateral Movement Velocity Control 0 to 1023
+#	data_spider[2] = If MODE == 'D', Velocity Control 0 to 1023  (Forward or Back)
+#                    If MODE == 'A', Velocity Control 0 to 1023  (Forward or Back)
 #	data_spider[3] = Right Joystick Vertical 0 to 1023
 #	data_spider[4] = Right Joystick Horizontal 0 to 1023
 
 
 def mode_analog():
-    global data_spider
+    global spider_is_running
+    spider_is_running = True
     print("ANALOG MODE")
+    spider_is_running = False
 
 def mode_digital():
-    if (data_spider[1] == 'U'):
-        for j in range(0,8):
+    global spider_is_running
+    spider_is_running = True
+    if (data_spider[1] == 'F'):
             go_front(15)
-#             print("Front  ",j)
-    if (data_spider[1] == 'D'):
-        for j in range(0,8):
+    if (data_spider[1] == 'B'):
             go_back(15)
-#             print("Back  ",j)
     if (data_spider[1] == 'R'):
-        for j in range(0,8):
             go_right(15)
-#             print("Right  ",j)
     if (data_spider[1] == 'L'):
-        for j in range(0,8):
             go_left(15)
-#             print("Left  ",j)
+    spider_is_running = False
 
 ##########     Web Routine    ##########
 @app.before_first_request
@@ -69,12 +69,13 @@ def activate_spider():
         global data_spider
         while True:
             if (new_data_spider == True):
-                if (data_spider[0] == 'A'):
-                    mode_analog()
-                elif (data_spider[0] == 'D'):
-                    mode_digital()
+                set_velocity(data_spider[2])
                 new_data_spider = False
-            #time.sleep(2)
+
+            if (data_spider[0] == 'A'):
+                mode_analog()
+            elif (data_spider[0] == 'D'):
+                mode_digital()
 
     thread = threading.Thread(target=run_control_spider)
     thread.start()
@@ -101,6 +102,8 @@ def video_feed():
 def mov():
     global data_spider
     global new_data_spider
+    global spider_is_running
+
     a_d = request.args.get("mode")
     j1_v = request.args.get("j1_v")
     j1_h = request.args.get("j1_h")
@@ -108,7 +111,7 @@ def mov():
     j2_h = request.args.get("j2_h")
     data_spider = [str(a_d),str(j1_v),str(j1_h),str(j2_v),str(j2_h)]
     new_data_spider = True
-    
+
     print ("Received mode " + str(a_d))
     print ("Received j1_v " + str(j1_v))
     print ("Received j1_h " + str(j1_h))

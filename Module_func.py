@@ -12,15 +12,19 @@ LONG_LEG = 70															#Long of Leg in cm
 LONG_ANT_LEG = 50														#Long of AntLeg in cm
 longftob = 50															#Long of Body from Floor in cm
 longinx = 50															#Long between Body and Leg in cm
-movinx = 30																#Long of movement over floor in cm
-moviny = 30																#Long of movement in altitud of leg in cm
-points_total=20															#Amount of movement for servos
+movinx = 30															#Long of movement over floor in cm
+moviny = 30															#Long of movement in altitud of leg in cm
+points_total = 30      		        											#Amount of movement for servos Min=6 and Max=200
+max_points_total = 200
+control_time = 20
+max_control_time = 100
+BASE_TIME = 1000
+CONTROL_BY_TIME = False
 
 #Create instace with system algebraic
 all1 = Leg(POS_LEFT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,60,movinx,moviny,points_total)
 all2 = Leg(POS_LEFT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,90,movinx,moviny,points_total)
 all3 = Leg(POS_LEFT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,120,movinx,moviny,points_total)
-
 alr1 = Leg(POS_RIGHT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,60,movinx,moviny,points_total)
 alr2 = Leg(POS_RIGHT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,90,movinx,moviny,points_total)
 alr3 = Leg(POS_RIGHT,0,LONG_ANT_LEG,LONG_LEG,longftob,0,longinx,120,movinx,moviny,points_total)
@@ -63,8 +67,32 @@ def set_pos_init():
 	    servoall1.angle = 90
 	    servoall2.angle = 90
 
+def set_velocity(vel):
+    global control_time
+    global points_total
+    if (vel != 'None'):
+        new_vel = int(vel)
+        if (CONTROL_BY_TIME == True):
+            if (new_vel > max_control_time):
+                new_vel = max_control_time
+            elif (new_vel < 0):
+                new_vel = 0
+            control_time = new_vel
+        else:
+            if (new_vel > max_points_total):
+                new_vel = max_points_total
+            elif (new_vel < 10):
+                new_vel = 10
+            all1.update_tpoints(new_vel)
+            all2.update_tpoints(new_vel)
+            all3.update_tpoints(new_vel)
+            alr1.update_tpoints(new_vel)
+            alr2.update_tpoints(new_vel)
+            alr3.update_tpoints(new_vel)
+            points_total = new_vel
+
 def go_front(vel):
-    print("Run Ahead")
+    #print("Run Ahead")
     for x in range(0,points_total):
         v1,v2,v3=alr1.getanglesforservos(x)
         sr1_1.angle = v3
@@ -96,6 +124,8 @@ def go_front(vel):
         sl3_1.angle = v3
         sl3_2.angle = v2
         sl3_3.angle = v1 - 45
+        if (CONTROL_BY_TIME == True):
+            time.sleep(control_time/BASE_TIME)
 
 def go_back(vel):
     #print("Run Revert")
@@ -130,6 +160,8 @@ def go_back(vel):
         sl3_1.angle = v3
         sl3_2.angle = v2
         sl3_3.angle = v1 - 45
+        if (CONTROL_BY_TIME == True):
+            time.sleep(control_time/BASE_TIME)
 
 def go_left(vel):
     print("Run Left")
@@ -165,6 +197,8 @@ def go_left(vel):
         sl3_1.angle = v3
         sl3_2.angle = v2
         sl3_3.angle = v1 - 45
+        if (CONTROL_BY_TIME == True):
+            time.sleep(control_time/BASE_TIME)
 
 def go_right(vel):
     print("Run Right")
@@ -200,3 +234,5 @@ def go_right(vel):
         sl3_1.angle = v3
         sl3_2.angle = v2
         sl3_3.angle = v1 - 45
+        if (CONTROL_BY_TIME == True):
+            time.sleep(control_time/BASE_TIME)

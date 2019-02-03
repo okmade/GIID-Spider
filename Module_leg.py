@@ -28,7 +28,14 @@ class Leg():
 
     def disactive(self):
         self.estateactive=False
-    
+
+    def update_tpoints(self,new_tpoints):
+        bef_tpoints = self.tpoints
+        self.tpoints = new_tpoints/2
+        if self.checklimits():
+            self.tpoints = bef_tpoints
+        self.updatexmov()
+
     def update_altcodo(self,new_altcodo):
         bef_altcodo = self.altcodo
         self.altcodo = new_altcodo
