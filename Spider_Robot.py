@@ -18,7 +18,6 @@ from Module_func import *
 
 from flask import Flask, render_template, Response, request
 from camera_pi import Camera
-import cv2
 import socket
 import io
 
@@ -84,13 +83,16 @@ def activate_spider():
 def index():
     """Video streaming"""
     return render_template('index.html')
+    """return video_feed()"""
 
 def gen(camera):
     """Video streaming generator function."""
     while True:
         frame = camera.get_frame()
+        #print ("Frame Size: " + str(len(frame)))
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n'
+               b'Content-Length: ' + str.encode(str(len(frame))) + b'\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/video_feed')
 def video_feed():
@@ -98,7 +100,23 @@ def video_feed():
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/mov')
+
+def gen1(camera):
+    """Video streaming generator function."""
+    frame = camera.get_frame()
+    return frame
+
+@app.route('/video_feed2')
+def video_feed2():
+    """Video streaming route. Put this in the src attribute of an img tag."""    
+    image_binary = gen1(Camera())
+    response = app.make_response(image_binary)
+    response.headers.set('Content-Type', 'image/jpeg')
+    return response
+
+
+
+@app.route('/mov', methods=['GET','POST','DELETE'])
 def mov():
     global data_spider
     global new_data_spider
@@ -117,7 +135,7 @@ def mov():
     print ("Received j1_h " + str(j1_h))
     print ("Received j2_v " + str(j2_v))
     print ("Received j2_h " + str(j2_h))
-    return render_template('index.html')
+    return "Received"
 
 
 
