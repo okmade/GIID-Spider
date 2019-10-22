@@ -12,7 +12,7 @@
 #Libraries
 
 import threading
-import time
+#import time
 from Module_leg import *
 from Module_func import *
 
@@ -32,21 +32,22 @@ spider_is_running = False
 
 global data_spider
 data_spider = ['N','N','N',512,512]
-#	data_spider[0] = "MODE", 'A' = Analogo, 'D' = Digital, 'N' = None
-#	data_spider[1] = If MODE == 'D', 'N' = None, 'F' = Forward, 'B' = Back, 'L' = Left, 'R' = Rigth, 'S' = Stop
-#					 If MODE == 'A', Lateral Movement Velocity Control 0 to 1023
-#	data_spider[2] = If MODE == 'D', Velocity Control 0 to 1023  (Forward or Back)
-#                    If MODE == 'A', Velocity Control 0 to 1023  (Forward or Back)
-#	data_spider[3] = Right Joystick Vertical 0 to 1023
-#	data_spider[4] = Right Joystick Horizontal 0 to 1023
+    #	data_spider[0] = "MODE", 'A' = Analogo, 'D' = Digital, 'N' = None
+    #	data_spider[1] = If MODE == 'D', 'N' = None, 'F' = Forward, 'B' = Back, 'L' = Left, 'R' = Rigth, 'S' = Stop
+    #					 If MODE == 'A', Lateral Movement Velocity Control 0 to 1023
+    #	data_spider[2] = If MODE == 'D', Velocity Control 0 to 1023  (Forward or Back)
+    #                    If MODE == 'A', Velocity Control 0 to 1023  (Forward or Back)
+    #	data_spider[3] = Right Joystick Vertical 0 to 1023
+    #	data_spider[4] = Right Joystick Horizontal 0 to 1023
 
-
+""" Analogo Mode """
 def mode_analog():
     global spider_is_running
     spider_is_running = True
     print("ANALOG MODE")
     spider_is_running = False
 
+""" Digital Mode """
 def mode_digital():
     global spider_is_running
     spider_is_running = True
@@ -61,6 +62,8 @@ def mode_digital():
     spider_is_running = False
 
 ##########     Web Routine    ##########
+
+""" Main function loop """
 @app.before_first_request
 def activate_spider():
     def run_control_spider():
@@ -79,14 +82,13 @@ def activate_spider():
     thread = threading.Thread(target=run_control_spider)
     thread.start()
 
+""" Control by WebSite """
 @app.route('/')
 def index():
-    """Video streaming"""
     return render_template('index.html')
-    """return video_feed()"""
 
+""" Video streaming generator function """
 def gen(camera):
-    """Video streaming generator function."""
     while True:
         frame = camera.get_frame()
         #print ("Frame Size: " + str(len(frame)))
@@ -94,28 +96,25 @@ def gen(camera):
                b'Content-Type: image/jpeg\r\n'
                b'Content-Length: ' + str.encode(str(len(frame))) + b'\r\n\r\n' + frame + b'\r\n')
 
-@app.route('/video_feed')
+@app.route('/video_feed')   #change by stream_video
 def video_feed():
-    """Video streaming route. Put this in the src attribute of an img tag."""
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
+""" Snapshoots generator function """
 def gen1(camera):
-    """Video streaming generator function."""
     frame = camera.get_frame()
     return frame
 
-@app.route('/video_feed2')
-def video_feed2():
-    """Video streaming route. Put this in the src attribute of an img tag."""    
+@app.route('/video_feed2')  #change by snapshoots_video
+def video_feed2(): 
     image_binary = gen1(Camera())
     response = app.make_response(image_binary)
     response.headers.set('Content-Type', 'image/jpeg')
     return response
 
 
-
+""" Data to conrol Spider """
 @app.route('/mov', methods=['GET','POST','DELETE'])
 def mov():
     global data_spider

@@ -146,9 +146,6 @@ class Leg():
             Qf1= Qa1
             Qf2= -Qa2+90
             Qf3= Qa3+180
-        #print ("Valor Qa1:",Qa1)
-        #print ("Valor Qf1:",Qf1)
-        #print ("      ")
         return Qf1,Qf2,Qf3
 		
     def getpointstodraw(self,point):
