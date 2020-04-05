@@ -6,8 +6,8 @@ from Servocomm import runMovement, runUpdate, Controller
 
 POS_LEFT = 1                #Position Left of Leg on the body
 POS_RIGHT = 2               #Position Right of Leg on the body
-LONG_LEG = 70               #Long of Leg in cm
-LONG_ANT_LEG = 50           #Long of AntLeg in cm
+LONG_LEG = 80               #Long of Leg in cm
+LONG_ANT_LEG = 45           #Long of AntLeg in cm
 longftob = 50               #Long of Body from Floor in cm
 longinx = 50                #Long between Body and Leg in cm
 movinx = 30                 #Long of movement over floor in cm

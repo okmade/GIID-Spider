@@ -8,12 +8,12 @@ from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
 
 ServPos =[
-             4,  5,  6,     #Leg LF -> pca0
-             0,  1,  2,     #Leg LM -> pca0
-             8,  9, 10,     #Leg RF -> pca0
-            13, 14, 15,     #Leg LB -> pca1
-             8,  9, 10,     #Leg RM -> pca1
-             1,  2,  3      #Leg RB -> pca1
+             9, 10, 11,     #Leg LF -> pca0
+             5,  6,  7,     #Leg LM -> pca0
+             1,  2,  3,     #Leg LB -> pca0
+             5,  6,  7,     #Leg RF -> pca1
+             9, 10, 11,     #Leg RM -> pca1
+            13, 14, 15      #Leg RB -> pca1
             ]
 
 logging.basicConfig(
@@ -79,13 +79,13 @@ class Controller:
             else:
                 self.servos[i] = servo.Servo(self.pca1.channels[ServPos[i]])
         
-        self.sRF = [self.servos[ 6], self.servos[ 7], self.servos[ 8] ]
+        self.sRF = [self.servos[ 9], self.servos[10], self.servos[11] ]
         self.sRM = [self.servos[12], self.servos[13], self.servos[14] ]
         self.sRB = [self.servos[15], self.servos[16], self.servos[17] ]
         
         self.sLF = [self.servos[ 0], self.servos[ 1], self.servos[ 2] ]
         self.sLM = [self.servos[ 3], self.servos[ 4], self.servos[ 5] ]
-        self.sLB = [self.servos[ 9], self.servos[10], self.servos[11] ]
+        self.sLB = [self.servos[ 6], self.servos[ 7], self.servos[ 8] ]
         
         self.sLegs = [self.sRF,
                       self.sRM,
@@ -119,21 +119,40 @@ class Controller:
             self.servos[servPos].angle = angle
 
 
-'''  Test
+'''
 prueba = Controller()
 prueba.set_pos_init()
 time.sleep(5)
-prueba.set_angle(11,180)
-prueba.set_angle(15,180)
-time.sleep(5)
-prueba.set_angle(11,90)
-prueba.set_angle(15,90)
-time.sleep(5)
-prueba.set_angle(11,0)
-prueba.set_angle(15,0)
 
-for i in range(0,180):
-    prueba.set_angle(11,i)
-    prueba.set_angle(15,i)
+for i in range(0,17):
+    prueba.set_angle(i,90)
+    prueba.set_angle(i,90)
+    prueba.set_angle(i,90)
+time.sleep(5000)
+'''
+'''
+for i in range(0,17):
+    prueba.set_angle(i,30)
+    prueba.set_angle(i,30)
+    prueba.set_angle(i,30)
+time.sleep(5)
+
+for i in range(0,17):
+    prueba.set_angle(i,130)
+    prueba.set_angle(i,130)
+    prueba.set_angle(i,130)
+time.sleep(5)
+
+for i in range(0,17):
+    prueba.set_angle(i,90)
+time.sleep(5)
+'''
+'''
+for i in range(70,110):
+    prueba.set_angle(5,i)
+    prueba.set_angle(3,i)
+    prueba.set_angle(4,i)
     time.sleep(0.1)
+
+
 '''
