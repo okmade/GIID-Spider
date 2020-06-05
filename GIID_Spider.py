@@ -7,69 +7,124 @@ from Servocomm import *
 from Robot import *
 
 """ Main function loop """
-#data_spider = ['N','N',30,512,512]
-#   data_spider[0] = "MODE", 'A' = Analogo, 'D' = Digital, 'N' = None
-#   data_spider[1] = If MODE == 'D', 'N' = None, 'F' = Forward, 'B' = Back, 'L' = Left, 'R' = Rigth, 'S' = Stop
-#                    If MODE == 'A', Lateral Movement Velocity Control 0 to 100
-#   data_spider[2] = If MODE == 'D', Velocity Control 0 to 100
-#                    If MODE == 'A', Velocity Control 0 to 100
-#   CAMERA CONTROL NO IMPLEMENTED YET
-#   data_spider[3] = Right Joystick Vertical 0 to 1023 to control camera
-#   data_spider[4] = Right Joystick Horizontal 0 to 1023 to control camera
+
+class runMovement(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self, name='Updating')
+        self._running = True
+        self.oldCurrentTime = 0
+        self.start()
+
+    def terminate(self):  
+        self._running = False
+    
+    def get_active(self):
+        return self._running
+
+    def run(self):
+        while self._running:
+            currentTime = int(round(time.time() * 1000))
+            delta = (currentTime - self.oldCurrentTime) / 1000
+            self.oldCurrentTime = currentTime
+            if (control_data.new_data == False):
+                Robot.update(delta)
+                for j in range(len(Robot.legs)):
+                    Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
+
 
 class control_data(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self,name='Controling_data')
-        self.data = ['N','N',30,512,512]
+        self.data    = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0]
+        self.oldData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0]
         self.new_data = False
         self.start()
         
-    def validate_data(self,data):
-        if (data[0] == 'D'):
-            if (data[1] == 'F' or data[1] == 'B' or
-                data[1] == 'R' or data[1] == 'L' or
-                data[1] == 'S'):
-                    return True
-        elif (data[0] == 'A'):
-            if (data[1] != None and data[2] != None ):
-                return True
-        return False
+    def validate_data(self, oldData, newData):
+            if (newData != None):
+                return float(newData)
+            else:
+                return oldData
         
     def set_new_data(self, data_entry):
-        if (self.validate_data(data_entry)):
-            self.data = data_entry
-            self.new_data = True
+        self.data = data_entry
+        self.new_data = True
         
     def run(self):
         while (True):
             if (self.new_data):
-                if (self.data[0] == 'D'):
-                    hexapod.set_speed(self.data[2]) #No impemented yet
-                    if (self.data[1] == 'F'):
-                        hexapod.set_movement('forward')
-                    if (self.data[1] == 'B'):
-                        hexapod.set_movement('backward')
-                    if (self.data[1] == 'R'):
-                        hexapod.set_movement('right')
-                    if (self.data[1] == 'L'):
-                        hexapod.set_movement('left')
-                    if (self.data[1] == 'S'):
-                        hexapod.set_movement('stop')
-                elif (self.data[0] == 'A'):
-                    pass
+                if (self.data != self.oldData):
+
+                    '''
+                    if ((self.data[1] != None) and (self.data[1] != self.oldData[1])):
+                        Robot.moveDistance = self.data[1]
+                    if ((self.data[2] != None) and (self.data[2] != self.oldData[2])):
+                        Robot.moveAngle = self.data[2]
+                    if ((self.data[3] != None) and (self.data[3] != self.oldData[3])):
+                        Robot.turnAngle = self.data[3]
+                    if ((self.data[4] != None) and (self.data[4] != self.oldData[4])):
+                        Robot.timeScale = self.data[4]
+                    if ((self.data[5] != None) and (self.data[5] != self.oldData[5])):
+                        Robot.bodyOffX = self.data[5]
+                    if ((self.data[6] != None) and (self.data[6] != self.oldData[6])):
+                        Robot.bodyOffY = self.data[6]
+                    if ((self.data[7] != None) and (self.data[7] != self.oldData[7])):
+                        Robot.bodyHigh = self.data[7]
+                    if ((self.data[8] != None) and (self.data[8] != self.oldData[8])):
+                        Robot.angleRoll = self.data[8]
+                    if ((self.data[9] != None) and (self.data[9] != self.oldData[9])):
+                        Robot.anglePitch = self.data[9]
+                    if ((self.data[10] != None) and (self.data[10] != self.oldData[10])):
+                        Robot.angleYaw = self.data[10]
+                    '''
+
+                    Robot.moveDistance = self.validate_data(Robot.moveDistance, self.data[1])
+                    Robot.moveAngle = self.validate_data(Robot.moveAngle, self.data[2])
+                    Robot.turnAngle = self.validate_data(Robot.turnAngle, self.data[3])
+                    Robot.timeScale = self.validate_data(Robot.timeScale, self.data[4])
+                    Robot.bodyOffX = self.validate_data(Robot.bodyOffX, self.data[5])
+                    Robot.bodyOffY = self.validate_data(Robot.bodyOffY, self.data[6])
+                    Robot.bodyHigh = self.validate_data(Robot.bodyHigh, self.data[7])
+                    Robot.angleRoll = self.validate_data(Robot.angleRoll, self.data[8])
+                    Robot.anglePitch = self.validate_data(Robot.anglePitch, self.data[9])
+                    Robot.angleYaw = self.validate_data(Robot.angleYaw, self.data[10])
+
+                    Robot.BodyIK()
+                    
+                    '''
+                    if ((self.data[11] != None) and (self.data[11] != self.oldData[11])):
+                        for i in range(len(Robot.legs)):
+                            Robot.legs[i].homeDistance = self.data[11]
+                            Robot.legs[i].updateHomePoint(self.data[11])
+                    '''
+                    
+                    for i in range(len(Robot.legs)):
+                        Robot.legs[i].homeDistance = self.validate_data(Robot.legs[i].homeDistance, self.data[11])
+                        if (self.data[11] != None):
+                            Robot.legs[i].updateHomePoint(self.data[11])
+
+                    if ((Robot.isHome == True) and (Robot.moveDistance == 0) and (Robot.turnAngle == 0)):
+                        for j in range(len(Robot.legs)):
+                            Robot.legs[j].LegIK(Robot.legs[j].homePoint[0], Robot.legs[j].homePoint[1], Robot.legs[j].homePoint[2])
+                            Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
+                    
+                    self.oldData = self.data
                 self.new_data = False
             else:
-                time.sleep(0.01) # keeps infinite while loop from killing processor
+                pass
 
 
 if __name__ == '__main__':
     controller = Controller()                               # Servo controller
-    hexapod = Hexapod(controller)                           # Hexapod Controller
+    Robot = BodyHex(controller)                             # Hexapod Controller
     control_data = control_data()                           # Data Proccess Controller
-    __builtins__.hexapod = hexapod
+    Run_Movement = runMovement()
+    __builtins__.Robot = Robot
     __builtins__.control_data = control_data
+    __builtins__.Run_Movement = Run_Movement
     app.run(host='0.0.0.0', debug=False, threaded=True)     #Run Routines
-    del hexapod
+    del Robot
     del controller
     print("Quitting!")

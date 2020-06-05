@@ -47,20 +47,33 @@ def gensnapshoot(camera):
 
 
 """ Data to conrol Robot """
-@app.route('/mov', methods=['GET','POST','DELETE'])
-def mov():
+@app.route('/data', methods=['GET','POST','DELETE'])
+def data():
     a_d = request.args.get("mode")
-    j1_v = request.args.get("j1_v")
-    j1_h = request.args.get("j1_h")
-    j2_v = request.args.get("j2_v")
-    j2_h = request.args.get("j2_h")
-    data = [str(a_d),str(j1_v),str(j1_h),str(j2_v),str(j2_h)]
-    control_data.set_new_data(data)
+    newMoveDistance = request.args.get("moveDistance")
+    newMoveAngle = request.args.get("moveAngle")
+    newTurnAngle = request.args.get("turnAngle")
+    newTimeScale = request.args.get("timeScale")
 
-    #print ("Received mode " + str(a_d))
-    #print ("Received j1_v " + str(j1_v))
-    #print ("Received j1_h " + str(j1_h))
-    #print ("Received j2_v " + str(j2_v))
-    #print ("Received j2_h " + str(j2_h))
+    newOffSetZ = request.args.get("offSetZ")
+    newOffSetX = request.args.get("offSetX")
+    newOffSetY = request.args.get("offSetY")
+
+    newRoll = request.args.get("roll")
+    newPitch = request.args.get("pitch")
+    newYaw = request.args.get("yaw")
+
+    newHomeDistance = request.args.get("homeDistance")
+
+    if (str(a_d) == 'Full'):
+        aux = 1
+    else:
+        aux = 0
+    
+    data = [aux, newMoveDistance, newMoveAngle,
+                newTurnAngle, newTimeScale, newOffSetX,
+                newOffSetY, newOffSetZ, newRoll,
+                newPitch, newYaw, newHomeDistance]
+    control_data.set_new_data(data)
     
     return "Received"

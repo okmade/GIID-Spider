@@ -15,12 +15,19 @@ ServPos =[
              9, 10, 11,     #Leg RM -> pca1
             13, 14, 15      #Leg RB -> pca1
             ]
+            
+servOffset = [[ -1, -11, -3],    #done
+              [-6, -1, -8],     #done
+              [-8, 0, -6],
+              [-3, 3, 5],       #done   [-3, 5, 5],
+              [-10,-1,-10],     #done   [-10,-5,-10],
+              [ 0, -3, 0]]      #done   [ 0, -1, 0]] 
 
 logging.basicConfig(
     level=logging.DEBUG,
     format='(%(threadName)-10s) %(message)s',
 )
-
+'''
 class runUpdate(threading.Thread):
 
     def __init__(self,function,*args):
@@ -63,7 +70,7 @@ class runMovement(threading.Thread):
     def run(self):
         while self._running:
             self.function(*self.args)
-
+'''
 class Controller:
 
     def __init__(self):
@@ -73,11 +80,13 @@ class Controller:
         self.pca0.frequency = 50
         self.pca1.frequency = 50
         self.servos = {}
+        self.servOffset = servOffset
         for i in range(0,len(ServPos)):
             if (i<9):
-                self.servos[i] = servo.Servo(self.pca0.channels[ServPos[i]])
+                self.servos[i] = servo.Servo(self.pca0.channels[ServPos[i]], min_pulse=500, max_pulse=2500)
             else:
-                self.servos[i] = servo.Servo(self.pca1.channels[ServPos[i]])
+                self.servos[i] = servo.Servo(self.pca1.channels[ServPos[i]], min_pulse=500, max_pulse=2500)
+            self.servos[i].actuation_range = 170
         
         self.sRF = [self.servos[ 9], self.servos[10], self.servos[11] ]
         self.sRM = [self.servos[12], self.servos[13], self.servos[14] ]
@@ -100,30 +109,68 @@ class Controller:
     def set_pos_init(self):
         for i in range(0,len(self.servos)):
             self.servos[i].angle = 90
-    
+
     def set_leg_angles(self, leg, angles):
         for i in range(0,3):
-            if (angles[i] > 180):
-                self.sLegs[leg][i].angle = 180
-            elif (angles[i]<0):
+            Temp = angles[i] + self.servOffset[leg][i]
+            if (Temp > 170):
+                self.sLegs[leg][i].angle = 170
+            elif (Temp<0):
                 self.sLegs[leg][i].angle = 0
             else:
-                self.sLegs[leg][i].angle = angles[i]
+                self.sLegs[leg][i].angle = Temp
         
     def set_angle(self, servPos, angle):
-        if (angle > 180):
-            self.servos[servPos].angle = 180
+        if (angle > 170):
+            self.servos[servPos].angle = 170
         elif (angle<0):
             self.servos[servPos].angle = 0
         else:
             self.servos[servPos].angle = angle
 
+'''
+
+prueba = Controller()
+offset1 = 0
+offset2 = 0
+offset3 = 0
+
+prueba.set_leg_angles(3,[85, 85, 85])
+prueba.set_leg_angles(4,[85, 85, 85])
+prueba.set_leg_angles(5,[85, 85, 85])
+
+prueba.set_leg_angles(0,[130, 170, 85])
+prueba.set_leg_angles(1,[85, 170, 85])
+prueba.set_leg_angles(2,[40 + offset1, 170 + offset2, 85 + offset3])
+
+'''
+
 
 '''
 prueba = Controller()
-prueba.set_pos_init()
-time.sleep(5)
+prueba.set_angle(2,0)
+#prueba.set_angle(1,90)
 
+
+while True:
+        for i in range(0, 170):
+                prueba.set_angle(2,i)
+                time.sleep(0.001)
+                if (i == 85):
+                        time.sleep(1)
+        print("180 Grados")
+        time.sleep(3)
+        for i in range(170, 0, -1):
+                prueba.set_angle(2,i)
+                time.sleep(0.001)
+                if (i == 85):
+                        time.sleep(1)
+        print("0 Grados")
+        time.sleep(3)
+
+'''
+
+'''
 for i in range(0,17):
     prueba.set_angle(i,90)
     prueba.set_angle(i,90)

@@ -17,11 +17,16 @@ def draw(data):
     yab = np.linspace(data[1][1], data[2][1], 50)
     zab = np.linspace(data[1][2], data[2][2], 50)
 
+    xbc = np.linspace(data[2][0], data[3][0], 50)
+    ybc = np.linspace(data[2][1], data[3][1], 50)
+    zbc = np.linspace(data[2][2], data[3][2], 50)
+
     plotxyz.clear()
     plotxyz.plot(xoa, yoa, zoa, zdir='z')
     plotxyz.plot(xab, yab, zab, zdir='z')
+    plotxyz.plot(xbc, ybc, zbc, zdir='z')
 
-    plotxyz.set_xlim3d([(min(data[0][0],data[1][0],data[2][0])-50), (max(data[0][0],data[1][0],data[2][0])+50)])
+    plotxyz.set_xlim3d([(min(data[0][0],data[1][0],data[2][0],data[3][0])-50), (max(data[0][0],data[1][0],data[2][0],data[3][0])+50)])
     plotxyz.set_xlabel('X')
 
     #plotxyz.set_ylim3d([(min(data[0][1],data[1][1],data[2][1])-50), (max(data[0][1],data[1][1],data[2][1])+50)])
