@@ -24,13 +24,18 @@ class runMovement(threading.Thread):
 
     def run(self):
         while self._running:
-            currentTime = int(round(time.time() * 1000))
-            delta = (currentTime - self.oldCurrentTime) / 1000
-            self.oldCurrentTime = currentTime
             if (control_data.new_data == False):
+                currentTime = int(round(time.time() * 1000))
+                delta = (currentTime - self.oldCurrentTime) / 1000
+                self.oldCurrentTime = currentTime
                 Robot.update(delta)
                 for j in range(len(Robot.legs)):
                     Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
+                #print(delta)
+                time.sleep(0.005)
+            else:
+                ##pass
+                time.sleep(0.005)
 
 
 class control_data(threading.Thread):
@@ -92,13 +97,6 @@ class control_data(threading.Thread):
                     Robot.angleYaw = self.validate_data(Robot.angleYaw, self.data[10])
 
                     Robot.BodyIK()
-                    
-                    '''
-                    if ((self.data[11] != None) and (self.data[11] != self.oldData[11])):
-                        for i in range(len(Robot.legs)):
-                            Robot.legs[i].homeDistance = self.data[11]
-                            Robot.legs[i].updateHomePoint(self.data[11])
-                    '''
                     
                     for i in range(len(Robot.legs)):
                         Robot.legs[i].homeDistance = self.validate_data(Robot.legs[i].homeDistance, self.data[11])

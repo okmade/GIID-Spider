@@ -11,7 +11,7 @@ cCoxaLength = 15                    #Long of Coxa
 
 #Those describe position relative of the body
 
-bodyHigh = 50                       #Long of Body from Floor in cm
+bodyHigh = 65                       #Long of Body from Floor in cm
 bodyOffX = 0                        #Offset X form origin
 bodyOffY = 0                        #Offset Y form origin
 
@@ -23,7 +23,7 @@ bodyYaw = 0
 
 turnAngle = 0                       #Angle movement refering origin
 moveAngle = 0                       #Angle for linear movement
-moveDistance = 30                    #Distance for linear movement
+moveDistance = 20                    #Distance for linear movement
 timeScale = 1
 
 state = 0                           #Stop/Walking/From walking to Stop/
@@ -125,6 +125,7 @@ class BodyHex:
                 return
         
         if (self.currentTime > self.stepTime):
+            #print("-")
             self.currentTime = 0
             dirMove = [self.moveDistance * math.sin(self.moveAngle*rad),
                         self.moveDistance * math.cos(self.moveAngle*rad)]
@@ -247,11 +248,11 @@ class leg():
     def IK2Servo(self):
         if (self.flip == True):
             self.servoAngles[0] = (85 - self.CoxaAngle)
-            self.servoAngles[1] = (85 - self.FemurAngle)
-            self.servoAngles[2] = (170 + (self.TibiaAngle + 5))
+            self.servoAngles[1] = (90 - self.FemurAngle)
+            self.servoAngles[2] = (180 + (self.TibiaAngle + 5))
         else:
             self.servoAngles[0] = (85 + self.CoxaAngle)
-            self.servoAngles[1] = (85 + self.FemurAngle)
+            self.servoAngles[1] = (90 + self.FemurAngle)
             self.servoAngles[2] = (- (self.TibiaAngle + 5))
 
     def resetMov(self, newTargetMovVec, newTargetTurnAngle, newIsForward = None):

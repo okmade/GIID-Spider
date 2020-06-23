@@ -29,7 +29,7 @@ def gen_stream(camera):
         frame = camera.get_frame()
         #print ("Frame Size: " + str(len(frame)))
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n'
+               #b'Content-Type: image/jpeg\r\n'
                b'Content-Length: ' + str.encode(str(len(frame))) + b'\r\n\r\n' + frame + b'\r\n')
 
 

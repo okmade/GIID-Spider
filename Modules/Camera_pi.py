@@ -36,13 +36,13 @@ class Camera(object):
         with picamera.PiCamera() as camera:
             # camera setup
             camera.resolution = (320, 240)
-            #camera.framerate = 10
+            camera.framerate = 15
             camera.hflip = True
-            #camera.vflip = True
+            camera.vflip = True
 
             # let camera warm up
             #camera.start_preview()
-            time.sleep(2)
+            time.sleep(1)
 
             stream = io.BytesIO()
             for foo in camera.capture_continuous(stream, 'jpeg',
@@ -55,8 +55,10 @@ class Camera(object):
                 stream.seek(0)
                 stream.truncate()
 
+                time.sleep(0.01)
+
                 # if there hasn't been any clients asking for frames in
-                # the last 10 seconds stop the thread
-                if time.time() - cls.last_access > 10:
+                # the last 5 seconds stop the thread
+                if time.time() - cls.last_access > 5:
                     break
         cls.thread = None
