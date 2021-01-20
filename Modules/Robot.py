@@ -5,13 +5,13 @@ from Servocomm import *
 
 #Initial Variables
 
-cTibiaLengt = 75                    #Long of Leg in cm
-cFemurLength = 50                   #Long of AntLeg in cm
-cCoxaLength = 15                    #Long of Coxa
+cTibiaLengt = 97                    #Long of Leg in cm
+cFemurLength = 43                   #Long of AntLeg in cm
+cCoxaLength = 28                    #Long of Coxa
 
 #Those describe position relative of the body
 
-bodyHigh = 65                       #Long of Body from Floor in cm
+bodyHigh = 70                       #Long of Body from Floor in cm
 bodyOffX = 0                        #Offset X form origin
 bodyOffY = 0                        #Offset Y form origin
 
@@ -23,26 +23,28 @@ bodyYaw = 0
 
 turnAngle = 0                       #Angle movement refering origin
 moveAngle = 0                       #Angle for linear movement
-moveDistance = 20                    #Distance for linear movement
+moveDistance = 0                    #Distance for linear movement
 timeScale = 1
+timeScaleBody = 0.8
 
 state = 0                           #Stop/Walking/From walking to Stop/
-homeDistance = 60                   #Inicial distance for legs
+homeDistance = 71                   #Inicial distance for legs
 
-stepHeight = 30
+stepHeight = 25
 stepPower = 3
 stepTime = 1
+stepTimeBody = 1
 
 #Initial Position and Angle for Legs 
  
 frontLegAngle =  45
-frontLegStart =  [41, 66, 0]
+frontLegStart =  [40, 86, 0]
 
 middleLegAngle = 0
-middleLegStart = [66,  0, 0]
+middleLegStart = [62,  0, 0]
 
 backLegAngle =   -45
-backLegStart =   [41,-66, 0]
+backLegStart =   [40,-86, 0]
 
 
 totalSteps = 60           #Amount of movement for servos Min=6 and Max=200
@@ -61,16 +63,31 @@ class BodyHex:
         self.bodyHigh = bodyHigh
         self.bodyOffX = bodyOffX
         self.bodyOffY = bodyOffY
+        self.bodyHighEnd = bodyHigh
+        self.bodyOffXEnd = bodyOffX
+        self.bodyOffYEnd = bodyOffY
+        self.bodyHighIni = 0
+        self.bodyOffXIni = 0
+        self.bodyOffYIni = 0
 
         self.angleRoll = bodyRoll
         self.anglePitch = bodyPitch
         self.angleYaw = bodyYaw
+        self.angleRollEnd = bodyRoll
+        self.anglePitchEnd = bodyPitch
+        self.angleYawEnd = bodyYaw
+        self.angleRollIni = 0
+        self.anglePitchIni = 0
+        self.angleYawIni = 0
 
-        
         self.stepTime = stepTime
         self.timeScale = timeScale
         self.currentTime = 0
+        self.stepTimeBody = stepTimeBody
+        self.timeScaleBody = timeScaleBody
+        self.currentTimeBody = 0
         self.isHome = True
+        self.isHomeBody = False
         self.goHome = False
 
         self.moveAngle = moveAngle
@@ -96,10 +113,29 @@ class BodyHex:
                      self.ML,
                      self.BL]
         
-        self.tripodR = [self.FR,self.MR,self.BR]
-        self.tripodL = [self.FL,self.ML,self.BL]
-        self.BodyIK()
-        
+        #self.tripodR = [self.FR,self.MR,self.BR]       # No implemented
+        #self.tripodL = [self.FL,self.ML,self.BL]       # No implemented
+        self.TPCamera = TPCamera(controller, 90,90)
+
+        self.BodyIK(self.timeScaleBody)
+    
+    def setInit(self):
+        if (self.isHome):
+            self.legs[0].isForward = False
+            self.legs[2].isForward = False
+            self.legs[4].isForward = False
+
+            self.legs[1].isForward = False
+            self.legs[3].isForward = False
+            self.legs[5].isForward = False
+
+            for x in range(len(self.legs)):
+                self.legs[x].dirFactor = 1
+                self.legs[x].resetMov([0,0],0)
+                self.legs[x].updateMov(0)
+                self.servosCon.set_leg_angles(x, self.legs[x].servoAngles)
+            self.moveDistance = 0
+
     def update(self, delta):
         dirMove  = [0, 0]
         self.currentTime = self.currentTime + (delta/self.timeScale)
@@ -120,7 +156,6 @@ class BodyHex:
 
                 for x in range(len(self.legs)):
                     self.legs[x].dirFactor = 1
-                
             else:
                 return
         
@@ -147,6 +182,7 @@ class BodyHex:
         
         deltaTime = self.currentTime / self.stepTime
 
+        #print("-")
         for i in range(0, 6):
             self.legs[i].updateMov(deltaTime)
 
@@ -161,30 +197,68 @@ class BodyHex:
         self.anglePitch = newAnglePitch
         self.angleYaw = newAngleYaw
         #self.BodyIK()
-        
-    def BodyIK(self):
-        SA = math.sin(self.anglePitch*rad)
-        CA = math.cos(self.anglePitch*rad)
+    
+    def BodyIK(self, delta):
+        self.currentTimeBody = self.currentTimeBody + (delta/self.timeScale)
 
-        SB = math.sin(self.angleRoll*rad)
-        CB = math.cos(self.angleRoll*rad)
+        if (self.isHomeBody):
+            if (self.anglePitch != self.anglePitchEnd or
+            self.angleRoll != self.angleRollEnd or
+            self.angleYaw != self.angleYawEnd or
+            self.bodyOffX != self.bodyOffXEnd or
+            self.bodyOffY != self.bodyOffYEnd or
+            self.bodyHigh != self.bodyHighEnd):
+                self.anglePitchIni = self.anglePitchEnd
+                self.angleRollIni = self.angleRollEnd
+                self.angleYawIni = self.angleYawEnd
+                self.bodyOffXIni = self.bodyOffXEnd
+                self.bodyOffYIni = self.bodyOffYEnd
+                self.bodyHighIni = self.bodyHighEnd
+                self.anglePitchEnd = self.anglePitch
+                self.angleRollEnd = self.angleRoll
+                self.angleYawEnd = self.angleYaw
+                self.bodyOffXEnd = self.bodyOffX
+                self.bodyOffYEnd = self.bodyOffY
+                self.bodyHighEnd = self.bodyHigh
+                self.currentTimeBody = 0
+                self.isHomeBody = False
+            else:
+                return
 
-        SG = math.sin(self.angleYaw*rad)
-        CG = math.cos(self.angleYaw*rad)
+        deltaTime = self.currentTimeBody / self.stepTimeBody
+        deltaAnglePitch =   ((self.anglePitchEnd - self.anglePitchIni) * deltaTime) + self.anglePitchIni
+        deltaAngleRoll =    ((self.angleRollEnd - self.angleRollIni) * deltaTime) + self.angleRollIni
+        deltaAngleYaw =     ((self.angleYawEnd - self.angleYawIni) * deltaTime) + self.angleYawIni
+        deltaBodyOffX =     ((self.bodyOffXEnd - self.bodyOffXIni) * deltaTime) + self.bodyOffXIni
+        deltaBodyOffY =     ((self.bodyOffYEnd - self.bodyOffYIni) * deltaTime) + self.bodyOffYIni
+        deltaBodyHigh =     ((self.bodyHighEnd - self.bodyHighIni) * deltaTime) + self.bodyHighIni
+
+        SA = math.sin(deltaAnglePitch*rad)
+        CA = math.cos(deltaAnglePitch*rad)
+
+        SB = math.sin(deltaAngleRoll*rad)
+        CB = math.cos(deltaAngleRoll*rad)
+
+        SG = math.sin(deltaAngleYaw*rad)
+        CG = math.cos(deltaAngleYaw*rad)
 
         for i in range(len(self.legs)):
             BodyIKPosX = ((self.legs[i].startedPosition[1]*(SB*SA*CG + CB*SG))
-                         +(self.legs[i].startedPosition[0]*(SB*SA*SG + CB*CG))
-                         -(self.legs[i].startedPosition[2]*SB*CA)) + self.bodyOffX
+                        +(self.legs[i].startedPosition[0]*(SB*SA*SG + CB*CG))
+                        -(self.legs[i].startedPosition[2]*SB*CA)) + deltaBodyOffX
 
             BodyIKPosY = ((self.legs[i].startedPosition[1]*CA*CG)
-                         -(self.legs[i].startedPosition[0]*CA*SG)
-                         +(self.legs[i].startedPosition[2]*SA)) + self.bodyOffY
+                        -(self.legs[i].startedPosition[0]*CA*SG)
+                        +(self.legs[i].startedPosition[2]*SA)) + deltaBodyOffY
 
             BodyIKPosZ = ((self.legs[i].startedPosition[1]*(SB*SG - CB*SA*CG))
-                         +(self.legs[i].startedPosition[0]*(CB*SA*SG + SB*CG))
-                         +(self.legs[i].startedPosition[2]*CB*CA)) + self.bodyHigh
+                        +(self.legs[i].startedPosition[0]*(CB*SA*SG + SB*CG))
+                        +(self.legs[i].startedPosition[2]*CB*CA)) + deltaBodyHigh
             self.legs[i].updateHomePosition(BodyIKPosX, BodyIKPosY, BodyIKPosZ)
+
+        if (self.currentTimeBody > self.stepTimeBody):
+            self.isHomeBody = True
+        
 
 class leg():
     def __init__(self, Position, Rotation, Lflip):
@@ -199,6 +273,9 @@ class leg():
         self.estateactive=True
         self.isForward = False
 
+        self.OldCoxaAngle = 0
+        self.OldFemurAngle = 0
+        self.OldTibiaAngle = 0
         self.CoxaAngle = 0
         self.FemurAngle = 0
         self.TibiaAngle = 0
@@ -232,9 +309,6 @@ class leg():
         self.startedPosition[2] = Position[2]
 
         self.updateHomePoint(self.homeDistance, Rotation, 0)
-
-        self.homeAnglePoint = (math.atan2(self.homePoint[1], self.homePoint[0]))*grad
-        self.homeRadiusPoint = math.sqrt((self.homePoint[0]*self.homePoint[0])+(self.homePoint[1]*self.homePoint[1]))
 
     def isactive(self):
         return self.estateactive
@@ -309,13 +383,16 @@ class leg():
         self.homePoint[1] = self.homePosition[1] + (newHomeDistance * dirY)
         if (posZ != None):
             self.homePoint[2] = posZ
+        
+        self.homeAnglePoint = (math.atan2(self.homePoint[1], self.homePoint[0]))*grad
+        self.homeRadiusPoint = math.sqrt((self.homePoint[0]*self.homePoint[0])+(self.homePoint[1]*self.homePoint[1]))
         #self.LegIK(self.homePoint[0], self.homePoint[1], self.homePoint[2])
 
     def updateHomePosition(self, posX, posY, posZ):
         self.homePosition[0] = posX
         self.homePosition[1] = posY
         self.homePosition[2] = posZ
-        #self.LegIK(self.homePoint[0], self.homePoint[1], self.homePoint[2])
+        self.LegIK(self.homePoint[0], self.homePoint[1], self.homePoint[2])
 
     def LegIK(self, IKPosX0, IKPosY0, IKPosZ0):
         global rad,grad
@@ -330,18 +407,23 @@ class leg():
                 self.CoxaAngle = -180 - (Temp1)
         else:
             self.CoxaAngle = Temp1
-        xL = math.sqrt((IKPosX*IKPosX) + (IKPosY*IKPosY)) - self.Coxa
-        L = math.sqrt((xL*xL) + (IKPosZ*IKPosZ))
-        Alfa1 = math.atan2(xL, abs(IKPosZ))
+        
+        try:
+            xL = math.sqrt((IKPosX*IKPosX) + (IKPosY*IKPosY)) - self.Coxa
+            L = math.sqrt((xL*xL) + (IKPosZ*IKPosZ))
+            Alfa1 = math.atan2(xL, abs(IKPosZ))
 
-        Temp1 = (((self.Femur*self.Femur) - (self.Tibia*self.Tibia)) + (L*L))
-        Temp2 = (2*self.Femur) * L
-        Alfa2 = math.acos(Temp1/Temp2)
-        self.FemurAngle = ((Alfa2 + Alfa1)*grad) - 90
+            Temp1 = (((self.Femur*self.Femur) - (self.Tibia*self.Tibia)) + (L*L))
+            Temp2 = (2*self.Femur) * L
+            Alfa2 = math.acos(Temp1/Temp2)
+            self.FemurAngle = ((Alfa2 + Alfa1)*grad) - 90
 
-        Temp1 = (((self.Femur*self.Femur) + (self.Tibia*self.Tibia)) - (L*L))
-        Temp2 = (2*self.Femur*self.Tibia)
-        self.TibiaAngle = ((math.acos(Temp1/Temp2))*grad - 180)
+            Temp1 = (((self.Femur*self.Femur) + (self.Tibia*self.Tibia)) - (L*L))
+            Temp2 = (2*self.Femur*self.Tibia)
+            self.TibiaAngle = ((math.acos(Temp1/Temp2))*grad - 180)
+        except:
+            self.FemurAngle = self.OldFemurAngle
+            self.TibiaAngle = self.OldTibiaAngle
 
         self.solution = False
         self.warning = False
@@ -354,6 +436,11 @@ class leg():
                 self.warning = True
             else:
                 self.Error = True
+        
+        self.OldCoxaAngle = self.CoxaAngle
+        self.OldFemurAngle = self.FemurAngle
+        self.OldTibiaAngle = self.TibiaAngle
+
         self.IK2Servo()
 
     def points2Draw(self):
@@ -380,6 +467,29 @@ class leg():
         pZ3 = self.homePoint[2]
 
         return [[pX0, pY0, pZ0], [pX1, pY1, pZ1], [pX2, pY2, pZ2], [pX3, pY3, pZ3]]
+
+class TPCamera():
+    def __init__(self, ServController, TiltAngle, PanAngle):
+        self.TPangles = [TiltAngle, PanAngle]
+        self.ServController = ServController
+
+        self.ServController.set_camera_angles(self.TPangles)
+
+    def updateAngles(self, TiltOffSet, PanOffSet):
+        self.TPangles[0]  = self.TPangles[0] - TiltOffSet
+        self.TPangles[1]  = self.TPangles[1] - PanOffSet
+
+        for i in range(0,len(self.TPangles)):
+            if (self.TPangles[i] > self.ServController.servMaxAngle[6][i]):
+                self.TPangles[i] = self.ServController.servMaxAngle[6][i]
+            elif (self.TPangles[i] < 0):
+                self.TPangles[i] = 0
+        
+        self.ServController.set_camera_angles(self.TPangles)
+
+
+
+
 
 '''
 #Testing Body

@@ -9,7 +9,6 @@ import io
 
 app = Flask(__name__)
 
-
 ##########     Web Routine    ##########
 
 """ Control by WebSite """
@@ -45,6 +44,10 @@ def gensnapshoot(camera):
     frame = camera.get_frame()
     return frame
 
+""" Connection Cheking """
+@app.route('/test', methods=['GET','POST','DELETE'])
+def test():
+    return "Connection Ok"
 
 """ Data to conrol Robot """
 @app.route('/data', methods=['GET','POST','DELETE'])
@@ -65,6 +68,9 @@ def data():
 
     newHomeDistance = request.args.get("homeDistance")
 
+    newTilt = request.args.get("tilt")
+    newPan = request.args.get("pan")
+
     if (str(a_d) == 'Full'):
         aux = 1
     else:
@@ -73,7 +79,8 @@ def data():
     data = [aux, newMoveDistance, newMoveAngle,
                 newTurnAngle, newTimeScale, newOffSetX,
                 newOffSetY, newOffSetZ, newRoll,
-                newPitch, newYaw, newHomeDistance]
+                newPitch, newYaw, newHomeDistance,
+                newTilt, newPan]
     control_data.set_new_data(data)
     
     return "Received"
