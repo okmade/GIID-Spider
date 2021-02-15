@@ -30,7 +30,7 @@ timeScaleBody = 0.8
 state = 0                           #Stop/Walking/From walking to Stop/
 homeDistance = 71                   #Inicial distance for legs
 
-stepHeight = 25
+stepHeight = 30
 stepPower = 3
 stepTime = 1
 stepTimeBody = 1
@@ -55,6 +55,78 @@ maxSteps = 200
 
 rad = (math.pi/180)
 grad = (180/math.pi)
+
+gait = 0
+gaitBeta =      [ 6, 6, 3, 3, 4, 2, 6]
+           #[?, millipede-like, fly-like, ?, ?, ant-like]
+
+gaitPath = [[3,2,1,6,5,4],
+            [1,3,5,2,4,6],
+            [2,1,3,3,2,1],
+            [3,2,1,2,1,3],
+            [2,1,4,4,3,2],
+            [2,1,2,1,2,1],
+            [6,6,6,6,6,6]]
+
+'''
+gaitPath[0] =   [3,2,1,6,5,4]
+                #[3,0,0,0,1,0,0],     #L3     ?
+                #[2,0,0,0,0,1,0],     #L2
+                #[1,0,0,0,0,0,1],     #L1
+                #[6,1,0,0,0,0,0],     #R3
+                #[5,0,1,0,0,0,0],     #R2
+                #[4,0,0,1,0,0,0]]     #R1
+
+gaitPath[1] =   [1,3,5,2,4,6]
+                #[1,0,0,0,0,0,1],     #L3     millipede-like
+                #[3,0,0,0,1,0,0],     #L2
+                #[5,0,1,0,0,0,0],     #L1
+                #[2,0,0,0,0,1,0],     #R3
+                #[4,0,0,1,0,0,0],     #R2
+                #[6,1,0,0,0,0,0]]     #R1
+
+gaitPath[2] =   [2,1,3,3,2,1]
+                #[2,0,1,0,0,1,0],     #L3     fly-like
+                #[1,0,0,1,0,0,1],     #L2
+                #[3,1,0,0,1,0,0],     #L1
+                #[3,1,0,0,1,0,0],     #R3
+                #[2,0,1,0,0,1,0],     #R2
+                #[1,0,0,1,0,0,1]]     #R1
+
+gaitPath[3] =   [3,2,1,2,1,3]
+                #[3,1,0,0,1,0,0],     #L3     ?
+                #[2,0,1,0,0,1,0],     #L2
+                #[1,0,0,1,0,0,1],     #L1
+                #[2,0,1,0,0,1,0],     #R3
+                #[1,0,0,1,0,0,1],     #R2
+                #[3,1,0,0,1,0,0]]     #R1
+
+gaitPath[4] =   [2,1,4,4,3,2]
+                #[2,0,0,1,0,0,0],     #L3     ?
+                #[1,0,0,0,1,0,0],     #L2
+                #[4,1,0,0,0,1,0],     #L1
+                #[4,1,0,0,0,1,0],     #R3
+                #[3,0,1,0,0,0,1],     #R2
+                #[2,0,0,1,0,0,0]]     #R1
+
+gaitPath[5] =   [2,1,2,1,2,1]
+                #[2,1,0,1,0,1,0],     #L3     ant-like
+                #[1,0,1,0,1,0,1],     #L2
+                #[2,1,0,1,0,1,0],     #L1
+                #[1,0,1,0,1,0,1],     #R3
+                #[2,1,0,1,0,1,0],     #R2
+                #[1,0,1,0,1,0,1]]     #R1
+
+gaitPath[6] =   [1,2,3,4,5,6]
+                #[1,0,0,0,0,0,0],     #L3   Base
+                #[2,0,0,0,0,0,0],     #L2
+                #[3,0,0,0,0,0,0],     #L1
+                #[4,0,0,0,0,0,0],     #R3
+                #[5,0,0,0,0,0,0],     #R2
+                #[6,0,0,0,0,0,0]]     #R1
+
+
+'''
 
 class BodyHex:
     def __init__(self,controller):
@@ -86,6 +158,13 @@ class BodyHex:
         self.stepTimeBody = stepTimeBody
         self.timeScaleBody = timeScaleBody
         self.currentTimeBody = 0
+
+        self.state = 0
+        self.activeGait = gait
+        self.newActiveGait = gait
+        self.stepGaitBeta = 0
+        self.activeGaitBeta = gaitBeta[gait]
+        self.dir = True
         self.isHome = True
         self.isHomeBody = False
         self.goHome = False
@@ -120,17 +199,8 @@ class BodyHex:
         self.BodyIK(self.timeScaleBody)
     
     def setInit(self):
-        if (self.isHome):
-            self.legs[0].isForward = False
-            self.legs[2].isForward = False
-            self.legs[4].isForward = False
-
-            self.legs[1].isForward = False
-            self.legs[3].isForward = False
-            self.legs[5].isForward = False
-
+        if (self.state == 0):
             for x in range(len(self.legs)):
-                self.legs[x].dirFactor = 1
                 self.legs[x].resetMov([0,0],0)
                 self.legs[x].updateMov(0)
                 self.servosCon.set_leg_angles(x, self.legs[x].servoAngles)
@@ -138,53 +208,107 @@ class BodyHex:
 
     def update(self, delta):
         dirMove  = [0, 0]
-        self.currentTime = self.currentTime + (delta/self.timeScale)
-        
-        if (self.isHome):
+        if (self.currentTime != self.stepTime):            
+            self.currentTime = self.currentTime + (delta/self.timeScale)
+
+        if (self.state == 0):
+            if (self.activeGait != self.newActiveGait):
+                self.activeGait = self.newActiveGait
+                self.activeGaitBeta = gaitBeta[self.newActiveGait]
+
             if (self.moveDistance != 0 or self.turnAngle != 0):
-                self.currentTime = self.stepTime + 0.01
-                self.isHome = False
-                self.goHome = False
-                
-                self.legs[0].isForward = True
-                self.legs[2].isForward = True
-                self.legs[4].isForward = True
-
-                self.legs[1].isForward = False
-                self.legs[3].isForward = False
-                self.legs[5].isForward = False
-
-                for x in range(len(self.legs)):
-                    self.legs[x].dirFactor = 1
+                self.currentTime = 0
+                self.stepGaitBeta = 0
+                self.state = 1
+                #print("State 1")
             else:
                 return
-        
-        if (self.currentTime > self.stepTime):
-            #print("-")
-            self.currentTime = 0
+        if (self.state == 1):
             dirMove = [self.moveDistance * math.sin(self.moveAngle*rad),
                         self.moveDistance * math.cos(self.moveAngle*rad)]
-            
             for i in range(0, 6):
-                if (i in [1, 3, 5]):
-                    self.legs[i].resetMov([-dirMove[0], -dirMove[1]], -self.turnAngle)
+                auxDirFactor0 = (gaitPath[self.activeGait][i] - 1) / (self.activeGaitBeta - 1)
+                auxDirFactor0X = (2*dirMove[0]*auxDirFactor0) - dirMove[0]
+                auxDirFactor0Y = (2*dirMove[1]*auxDirFactor0) - dirMove[1]
+                self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y],
+                                        self.turnAngle,1)
+            self.dir = True
+
+
+        if (self.currentTime == self.stepTime):
+            self.currentTime = 0
+
+            if (self.state == 1):
+                if (self.stepGaitBeta >= (self.activeGaitBeta - 1)):
+                    self.state = 2
+                    #print("State 2")
                 else:
-                    self.legs[i].resetMov(dirMove, self.turnAngle)
+                    self.stepGaitBeta = self.stepGaitBeta + 1
             
-            if (self.goHome == True and self.isHome == False):
-                self.isHome = True
-                for x in range(len(self.legs)):
-                    self.legs[x].isForward = False
-            if (self.moveDistance == 0 and self.turnAngle == 0):
-                self.goHome = True
-            else:
-                self.goHome = False
-        
+            if (self.state == 2):
+                if (self.stepGaitBeta >= (self.activeGaitBeta - 1)):
+                    self.stepGaitBeta = 0
+                    if (self.moveDistance > 0):
+                        self.dir = True
+                    else:
+                        self.dir = False
+                    if (self.moveDistance == 0 and self.turnAngle == 0):
+                        for i in range(0, 6):
+                            auxDirFactor0 = (gaitPath[self.activeGait][i] - 1) / (self.activeGaitBeta - 1)
+                            auxDirFactor0X = (2*self.legs[i].targetMoveVec[0]*auxDirFactor0) - self.legs[i].targetMoveVec[0]
+                            auxDirFactor0Y = (2*self.legs[i].targetMoveVec[1]*auxDirFactor0) - self.legs[i].targetMoveVec[1]
+                            self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y],
+                                                self.turnAngle,-1)
+                        self.dir = True
+                        self.state = 3
+                        #print("State 3")
+                    else:
+                        dirMove = [self.moveDistance * math.sin(self.moveAngle*rad),
+                                   self.moveDistance * math.cos(self.moveAngle*rad)]
+                        for i in range(0, 6):
+                            self.legs[i].resetMov([dirMove[0],dirMove[1]], self.turnAngle)
+                    
+                else:
+                    self.stepGaitBeta = self.stepGaitBeta + 1
+                    
+            elif (self.state == 3):
+                if (self.stepGaitBeta >= (self.activeGaitBeta - 1)):
+                    self.state = 0
+                    self.stepGaitBeta = 0
+                    #print("State 0")
+                    return
+                else:
+                    self.stepGaitBeta = self.stepGaitBeta + 1
+
+        if (self.currentTime > self.stepTime):
+            self.currentTime = self.stepTime
+
         deltaTime = self.currentTime / self.stepTime
 
-        #print("-")
+        if (not(self.dir)):
+            deltaTime = 1 - deltaTime
+            auxStepGaitBeta = ((self.activeGaitBeta - 1) - self.stepGaitBeta)
+        else:
+            auxStepGaitBeta = self.stepGaitBeta
+
         for i in range(0, 6):
-            self.legs[i].updateMov(deltaTime)
+            auxBeta0 = ((gaitPath[self.activeGait][i] - 1) + auxStepGaitBeta)
+            if (auxBeta0 >= self.activeGaitBeta):
+                auxBeta0 = auxBeta0 - self.activeGaitBeta
+            auxBeta1 = auxBeta0 / (self.activeGaitBeta - 1)
+            if (auxBeta1 != 1):
+                auxDeltaTime = ((deltaTime + auxBeta0) / (self.activeGaitBeta - 1))
+                self.legs[i].dirFactor = -1
+                if ((self.state == 1) or (self.state == 3)):
+                    auxDeltaTime = None
+                self.legs[i].isUp = False
+            else:
+                auxDeltaTime = deltaTime
+                self.legs[i].isUp = True
+                self.legs[i].dirFactor = 1
+            
+            self.legs[i].updateMov(auxDeltaTime)
+
 
     def updateOffset(self, newBodyHigh, newBodyOffX, newBodyOffY):        
         self.bodyHigh = newBodyHigh
@@ -271,7 +395,7 @@ class leg():
         self.warning = False
         self.Error = False
         self.estateactive=True
-        self.isForward = False
+        self.isUp = False
 
         self.OldCoxaAngle = 0
         self.OldFemurAngle = 0
@@ -280,8 +404,10 @@ class leg():
         self.FemurAngle = 0
         self.TibiaAngle = 0
 
-        self.stateMov = 0
-        self.statedir = 1
+        self.stateMov = 0       #
+        self.statedir = 1       #
+        self.isCustomTarget = False
+        self.customTarget = [[0, 0, 0], [0, 0, 0]]
         self.dirFactor = 1
         self.stepHeight= stepHeight
         self.stepPower = stepPower
@@ -329,38 +455,56 @@ class leg():
             self.servoAngles[1] = (90 + self.FemurAngle)
             self.servoAngles[2] = (- (self.TibiaAngle + 5))
 
-    def resetMov(self, newTargetMovVec, newTargetTurnAngle, newIsForward = None):
-        self.stateMov = 0
-        self.dirFactor = -self.dirFactor
-        
-        if (newIsForward != None):
-            self.isForward = newIsForward
-        
+    def customresetMov(self, newTargetIni, newTargetEnd, typeMov = None):  #TypeMov= Linear, Curve: Only for x,y, z=0 
+        self.isCustomTarget = True
+        self.customTarget[0] = newTargetIni
+        self.customTarget[1] = newTargetEnd
+
+    def resetMov(self, newTargetMovVec, newTargetTurnAngle, typeMov = None):   #TypeMov: 1=[0,0] to value, 2=value to [0,0], None= Normal
+        self.isCustomTarget = False
         self.targetMoveVec[0] = newTargetMovVec[0]
         self.targetMoveVec[1] = newTargetMovVec[1]
         self.targetTurnAngle = newTargetTurnAngle
+        if (typeMov == 1):
+            self.isCustomTarget = True
+            self.customTarget[0] = [0,0]
+            self.customTarget[1] = newTargetMovVec
+        elif (typeMov == -1):
+            self.isCustomTarget = True
+            self.customTarget[0] = newTargetMovVec
+            self.customTarget[1] = [0,0]
+            self.targetMoveVec[0] = 0
+            self.targetMoveVec[1] = 0
 
-    def updateMov(self, timeP):
+    def updateMov(self, timeP = None):
+        if (timeP == None):
+            return
         movVecX = 0
         movVecY = 0
+        angleVecX = 0
+        angleVecY = 0
         movZ = 0
-        factor = -self.dirFactor
+        timeAuxMovZ = 0
+        factor = self.dirFactor
 
-        if (timeP < 0.5):
-            timeAux = 2 * timeP
+        if (self.isUp == True):
+            if (timeP < 0.5):
+                timeAuxMovZ = 1 - (2 * timeP)
+            else:
+                timeAuxMovZ = (2 * timeP) - 1
+            movZ = (1 - pow(timeAuxMovZ, self.stepPower))* (self.stepHeight)        #Remember to add new movement system
+        
+        if (self.isCustomTarget):
+            timeAux = timeP
+            movVecX = -(((self.customTarget[1][0] - self.customTarget[0][0]) * timeAux) + self.customTarget[0][0])
+            movVecY = -(((self.customTarget[1][1] - self.customTarget[0][1]) * timeAux) + self.customTarget[0][1])
+            angleStep = self.homeAnglePoint + (self.targetTurnAngle * timeAux) * -1
         else:
-            if (self.stateMov == 0):
-                self.isForward = not(self.isForward)
-                self.stateMov = 1
-            timeAux = 2 - (2 * timeP)
-        
-        if (self.isForward):
-            movZ = (1 - pow(timeAux, self.stepPower))* (self.stepHeight)
-        
-        movVecX = self.targetMoveVec[0] * timeAux * factor
-        movVecY = self.targetMoveVec[1] * timeAux * factor
+            timeAux = (2 * timeP) - 1
+            movVecX = self.targetMoveVec[0] * timeAux * factor
+            movVecY = self.targetMoveVec[1] * timeAux * factor
+            angleStep = self.homeAnglePoint + (self.targetTurnAngle * timeAux * factor)
 
-        angleStep = self.homeAnglePoint + (self.targetTurnAngle * timeAux * -factor)
         angleVecX = self.homeRadiusPoint * math.cos(angleStep*rad) - self.homePoint[0]
         angleVecY = self.homeRadiusPoint * math.sin(angleStep*rad) - self.homePoint[1]
 

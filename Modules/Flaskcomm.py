@@ -71,6 +71,8 @@ def data():
     newTilt = request.args.get("tilt")
     newPan = request.args.get("pan")
 
+    newGait = request.args.get("gait")
+
     if (str(a_d) == 'Full'):
         aux = 1
     else:
@@ -80,7 +82,7 @@ def data():
                 newTurnAngle, newTimeScale, newOffSetX,
                 newOffSetY, newOffSetZ, newRoll,
                 newPitch, newYaw, newHomeDistance,
-                newTilt, newPan]
+                newTilt, newPan, newGait]
     control_data.set_new_data(data)
     
     return "Received"

@@ -45,8 +45,8 @@ class control_data(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self,name='Controling_data')
-        self.data    = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90]
-        self.oldData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90]
+        self.data    = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90, 0]
+        self.oldData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90, 0]
         self.new_data = False
         self.start()
         
@@ -64,8 +64,6 @@ class control_data(threading.Thread):
         while (True):
             if (self.new_data):
                 if ((self.data != self.oldData) or (self.data[12] != None) or (self.data[13] != None)):
-
-                    
                     if ((self.data[1] != None) and (self.data[1] != self.oldData[1])):
                         Robot.moveDistance = float(self.data[1])
                     if ((self.data[2] != None) and (self.data[2] != self.oldData[2])):
@@ -86,6 +84,8 @@ class control_data(threading.Thread):
                         Robot.anglePitch = float(self.data[9])
                     if ((self.data[10] != None) and (self.data[10] != self.oldData[10])):
                         Robot.angleYaw = float(self.data[10])
+                    if ((self.data[14] != None) and (self.data[14] != self.oldData[14])):
+                        Robot.newActiveGait = int(self.data[14])
                     
                     if (((self.data[12] != None)) or
                     ((self.data[13] != None))):
@@ -119,10 +119,10 @@ class control_data(threading.Thread):
                         #if (self.data[11] != None):
                         #    Robot.legs[i].updateHomePoint(self.data[11])
 
-                    if ((Robot.isHome == True) and (Robot.moveDistance == 0) and (Robot.turnAngle == 0)):
+                    """ if ((Robot.isHome == True) and (Robot.moveDistance == 0) and (Robot.turnAngle == 0)):
                         for j in range(len(Robot.legs)):
                             Robot.legs[j].LegIK(Robot.legs[j].homePoint[0], Robot.legs[j].homePoint[1], Robot.legs[j].homePoint[2])
-                            Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
+                            Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles) """
                     
                     self.oldData = self.data
                 self.new_data = False
