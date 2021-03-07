@@ -1,55 +1,33 @@
 import time
 import sys
 import os
+import threading
+
 sys.dont_write_bytecode = True
 sys.path.append('Modules')
 from Flaskcomm import *
 from Servocomm import *
 from Robot import *
-from Modules import Stream
+from StreamVideo import *
 
 """ Main function loop """
 
-class runMovement(threading.Thread):
-
+class runMovementData(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name='Updating')
         self._running = True
         self.oldCurrentTime = 0
-        self.start()
-
-    def terminate(self):  
-        self._running = False
-    
-    def get_active(self):
-        return self._running
-
-    def run(self):
-        while self._running:
-            if (control_data.new_data == False):
-                currentTime = int(round(time.time() * 1000))
-                delta = (currentTime - self.oldCurrentTime) / 1000
-                self.oldCurrentTime = currentTime
-                Robot.BodyIK(delta)
-                Robot.update(delta)
-                for j in range(len(Robot.legs)):
-                    Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
-                #print(delta)
-                time.sleep(0.001)
-            else:
-                ##pass
-                time.sleep(0.001)
-
-
-class control_data(threading.Thread):
-
-    def __init__(self):
-        threading.Thread.__init__(self,name='Controling_data')
         self.data    = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90, 0]
         self.oldData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 90, 90, 0]
         self.new_data = False
         self.start()
-        
+
+    def terminate(self):
+        self._running = False
+    
+    def get_active(self):
+        return self._running
+    
     def validate_data(self, oldData, newData):
             if (newData != None):
                 return float(newData)
@@ -59,10 +37,19 @@ class control_data(threading.Thread):
     def set_new_data(self, data_entry):
         self.data = data_entry
         self.new_data = True
-        
+
     def run(self):
-        while (True):
-            if (self.new_data):
+        while self._running:
+            if (self.new_data == False):
+                currentTime = int(round(time.time() * 1000))
+                delta = (currentTime - self.oldCurrentTime) / 1000
+                self.oldCurrentTime = currentTime
+                Robot.BodyIK(delta)
+                Robot.update(delta)
+                for j in range(len(Robot.legs)):
+                    Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles)
+                time.sleep(0.001)
+            else:
                 if ((self.data != self.oldData) or (self.data[12] != None) or (self.data[13] != None)):
                     if ((self.data[1] != None) and (self.data[1] != self.oldData[1])):
                         Robot.moveDistance = float(self.data[1])
@@ -87,8 +74,7 @@ class control_data(threading.Thread):
                     if ((self.data[14] != None) and (self.data[14] != self.oldData[14])):
                         Robot.newActiveGait = int(self.data[14])
                     
-                    if (((self.data[12] != None)) or
-                    ((self.data[13] != None))):
+                    if (((self.data[12] != None)) or ((self.data[13] != None))):
                         if (self.data[12] == None):
                             self.data[12] = '0'
                         if (self.data[13] == None):
@@ -107,42 +93,25 @@ class control_data(threading.Thread):
                     Robot.anglePitch = self.validate_data(Robot.anglePitch, self.data[9])
                     Robot.angleYaw = self.validate_data(Robot.angleYaw, self.data[10])
                     '''
-
-                    #Robot.BodyIK()
-                    
                     if ((self.data[11] != None) and (self.data[11] != self.oldData[11])):
                         for i in range(len(Robot.legs)):
                             Robot.legs[i].homeDistance = float(self.data[11])
-                            Robot.legs[i].updateHomePoint(float(self.data[11]))
-
-                        #Robot.legs[i].homeDistance = self.validate_data(Robot.legs[i].homeDistance, self.data[11])
-                        #if (self.data[11] != None):
-                        #    Robot.legs[i].updateHomePoint(self.data[11])
-
-                    """ if ((Robot.isHome == True) and (Robot.moveDistance == 0) and (Robot.turnAngle == 0)):
-                        for j in range(len(Robot.legs)):
-                            Robot.legs[j].LegIK(Robot.legs[j].homePoint[0], Robot.legs[j].homePoint[1], Robot.legs[j].homePoint[2])
-                            Robot.servosCon.set_leg_angles(j, Robot.legs[j].servoAngles) """
-                    
+                            Robot.legs[i].updateHomePoint(float(self.data[11]))                 
                     self.oldData = self.data
                 self.new_data = False
-            else:
-                pass
-
 
 if __name__ == '__main__':
-    
-    Stream.start()
     controller = Controller()                               # Servo controller
     Robot = BodyHex(controller)                             # Hexapod Controller
     Robot.setInit()
-    control_data = control_data()                           # Data Proccess Controller
-    Run_Movement = runMovement()
+    Run_MovementData = runMovementData()
+    video = StreamVideo("Flask-TCP")
+    __builtins__.video = video
     __builtins__.Robot = Robot
-    __builtins__.control_data = control_data
-    __builtins__.Run_Movement = Run_Movement
+    __builtins__.Run_MovementData = Run_MovementData
     app.run(host='0.0.0.0', debug=False, threaded=True)     #Run Routines
-    Stream.stop()
+    video._running = False
+    Run_MovementData._running = False
     del Robot
     del controller
     print("Quitting!")

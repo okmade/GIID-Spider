@@ -14,7 +14,6 @@ cCoxaLength = 28                    #Long of Coxa
 bodyHigh = 70                       #Long of Body from Floor in cm
 bodyOffX = 0                        #Offset X form origin
 bodyOffY = 0                        #Offset Y form origin
-
 bodyRoll = 0
 bodyPitch = 0
 bodyYaw = 0
@@ -26,10 +25,8 @@ moveAngle = 0                       #Angle for linear movement
 moveDistance = 0                    #Distance for linear movement
 timeScale = 1
 timeScaleBody = 0.8
-
 state = 0                           #Stop/Walking/From walking to Stop/
 homeDistance = 71                   #Inicial distance for legs
-
 stepHeight = 30
 stepPower = 3
 stepTime = 1
@@ -39,19 +36,15 @@ stepTimeBody = 1
  
 frontLegAngle =  45
 frontLegStart =  [40, 86, 0]
-
 middleLegAngle = 0
 middleLegStart = [62,  0, 0]
-
 backLegAngle =   -45
 backLegStart =   [40,-86, 0]
-
 
 totalSteps = 60           #Amount of movement for servos Min=6 and Max=200
 control_time = 20
 minSteps = 10
 maxSteps = 200
-
 
 rad = (math.pi/180)
 grad = (180/math.pi)
@@ -59,7 +52,6 @@ grad = (180/math.pi)
 gait = 0
 gaitBeta =      [ 6, 6, 3, 3, 4, 2, 6]
            #[?, millipede-like, fly-like, ?, ?, ant-like]
-
 gaitPath = [[3,2,1,6,5,4],
             [1,3,5,2,4,6],
             [2,1,3,3,2,1],
@@ -124,8 +116,6 @@ gaitPath[6] =   [1,2,3,4,5,6]
                 #[4,0,0,0,0,0,0],     #R3
                 #[5,0,0,0,0,0,0],     #R2
                 #[6,0,0,0,0,0,0]]     #R1
-
-
 '''
 
 class BodyHex:
@@ -185,23 +175,17 @@ class BodyHex:
         self.ML  = leg(middleLegStart, middleLegAngle, True)
         self.BL  = leg(backLegStart, backLegAngle, True)
 
-        self.legs = [self.FR,
-                     self.MR,
-                     self.BR,
-                     self.FL,
-                     self.ML,
-                     self.BL]
-        
+        self.legs = [self.FR, self.MR, self.BR,
+                     self.FL, self.ML, self.BL]
         #self.tripodR = [self.FR,self.MR,self.BR]       # No implemented
         #self.tripodL = [self.FL,self.ML,self.BL]       # No implemented
         self.TPCamera = TPCamera(controller, 90,90)
-
         self.BodyIK(self.timeScaleBody)
     
     def setInit(self):
         if (self.state == 0):
             for x in range(len(self.legs)):
-                self.legs[x].resetMov([0,0],0)
+                self.legs[x].resetMov([0,0,0],0)
                 self.legs[x].updateMov(0)
                 self.servosCon.set_leg_angles(x, self.legs[x].servoAngles)
             self.moveDistance = 0
@@ -230,10 +214,9 @@ class BodyHex:
                 auxDirFactor0 = (gaitPath[self.activeGait][i] - 1) / (self.activeGaitBeta - 1)
                 auxDirFactor0X = (2*dirMove[0]*auxDirFactor0) - dirMove[0]
                 auxDirFactor0Y = (2*dirMove[1]*auxDirFactor0) - dirMove[1]
-                self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y],
-                                        self.turnAngle,1)
+                auxDirFactorAng = (2*self.turnAngle*auxDirFactor0) - self.turnAngle
+                self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y,auxDirFactorAng],1)
             self.dir = True
-
 
         if (self.currentTime == self.stepTime):
             self.currentTime = 0
@@ -244,7 +227,6 @@ class BodyHex:
                     #print("State 2")
                 else:
                     self.stepGaitBeta = self.stepGaitBeta + 1
-            
             if (self.state == 2):
                 if (self.stepGaitBeta >= (self.activeGaitBeta - 1)):
                     self.stepGaitBeta = 0
@@ -257,8 +239,8 @@ class BodyHex:
                             auxDirFactor0 = (gaitPath[self.activeGait][i] - 1) / (self.activeGaitBeta - 1)
                             auxDirFactor0X = (2*self.legs[i].targetMoveVec[0]*auxDirFactor0) - self.legs[i].targetMoveVec[0]
                             auxDirFactor0Y = (2*self.legs[i].targetMoveVec[1]*auxDirFactor0) - self.legs[i].targetMoveVec[1]
-                            self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y],
-                                                self.turnAngle,-1)
+                            auxDirFactorAng = (2*self.legs[i].targetTurnAngle*auxDirFactor0) - self.legs[i].targetTurnAngle
+                            self.legs[i].resetMov([auxDirFactor0X,auxDirFactor0Y,auxDirFactorAng],-1)
                         self.dir = True
                         self.state = 3
                         #print("State 3")
@@ -266,11 +248,9 @@ class BodyHex:
                         dirMove = [self.moveDistance * math.sin(self.moveAngle*rad),
                                    self.moveDistance * math.cos(self.moveAngle*rad)]
                         for i in range(0, 6):
-                            self.legs[i].resetMov([dirMove[0],dirMove[1]], self.turnAngle)
-                    
+                            self.legs[i].resetMov([dirMove[0],dirMove[1], self.turnAngle])
                 else:
                     self.stepGaitBeta = self.stepGaitBeta + 1
-                    
             elif (self.state == 3):
                 if (self.stepGaitBeta >= (self.activeGaitBeta - 1)):
                     self.state = 0
@@ -308,7 +288,6 @@ class BodyHex:
                 self.legs[i].dirFactor = 1
             
             self.legs[i].updateMov(auxDeltaTime)
-
 
     def updateOffset(self, newBodyHigh, newBodyOffX, newBodyOffY):        
         self.bodyHigh = newBodyHigh
@@ -359,10 +338,8 @@ class BodyHex:
 
         SA = math.sin(deltaAnglePitch*rad)
         CA = math.cos(deltaAnglePitch*rad)
-
         SB = math.sin(deltaAngleRoll*rad)
         CB = math.cos(deltaAngleRoll*rad)
-
         SG = math.sin(deltaAngleYaw*rad)
         CG = math.cos(deltaAngleYaw*rad)
 
@@ -460,19 +437,19 @@ class leg():
         self.customTarget[0] = newTargetIni
         self.customTarget[1] = newTargetEnd
 
-    def resetMov(self, newTargetMovVec, newTargetTurnAngle, typeMov = None):   #TypeMov: 1=[0,0] to value, 2=value to [0,0], None= Normal
+    def resetMov(self, newTargetMovVec, typeMov = None):   #TypeMov: 1=[0,0] to value, 2=value to [0,0], None= Normal
         self.isCustomTarget = False
         self.targetMoveVec[0] = newTargetMovVec[0]
         self.targetMoveVec[1] = newTargetMovVec[1]
-        self.targetTurnAngle = newTargetTurnAngle
+        self.targetTurnAngle = newTargetMovVec[2]
         if (typeMov == 1):
             self.isCustomTarget = True
-            self.customTarget[0] = [0,0]
+            self.customTarget[0] = [0,0,0]
             self.customTarget[1] = newTargetMovVec
         elif (typeMov == -1):
             self.isCustomTarget = True
             self.customTarget[0] = newTargetMovVec
-            self.customTarget[1] = [0,0]
+            self.customTarget[1] = [0,0,0]
             self.targetMoveVec[0] = 0
             self.targetMoveVec[1] = 0
 
@@ -498,7 +475,7 @@ class leg():
             timeAux = timeP
             movVecX = -(((self.customTarget[1][0] - self.customTarget[0][0]) * timeAux) + self.customTarget[0][0])
             movVecY = -(((self.customTarget[1][1] - self.customTarget[0][1]) * timeAux) + self.customTarget[0][1])
-            angleStep = self.homeAnglePoint + (self.targetTurnAngle * timeAux) * -1
+            angleStep = self.homeAnglePoint - (((self.customTarget[1][2] - self.customTarget[0][2]) * timeAux) + self.customTarget[0][2])
         else:
             timeAux = (2 * timeP) - 1
             movVecX = self.targetMoveVec[0] * timeAux * factor
@@ -616,7 +593,6 @@ class TPCamera():
     def __init__(self, ServController, TiltAngle, PanAngle):
         self.TPangles = [TiltAngle, PanAngle]
         self.ServController = ServController
-
         self.ServController.set_camera_angles(self.TPangles)
 
     def updateAngles(self, TiltOffSet, PanOffSet):

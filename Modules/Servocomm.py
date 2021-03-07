@@ -1,5 +1,3 @@
-import logging
-
 from board import SCL, SDA
 import busio
 import threading
@@ -42,58 +40,8 @@ servMaxAngle = [[180, 180, 180],    #Leg RM
                 [180, 180, 180],    #Leg LM
                 [150, 150, 150]]    #Camera Tilt and Pan
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='(%(threadName)-10s) %(message)s',
-)
-
-'''
-class runUpdate(threading.Thread):
-
-    def __init__(self,function,*args):
-        threading.Thread.__init__(self,name='Updating_steps')
-        self.function=function
-        self.args = args
-        #self.lock = threading.Lock()
-        self._running = True
-        self.start()
-    
-    def get_active(self):
-        return self._running
-
-    def run(self):
-        #logging.debug('Acquired lock')
-        #self.lock.acquire()
-        try:
-            self.function(*self.args)
-            self._running = False
-        finally:
-            pass
-            #logging.debug('Done')
-            #self.lock.release()
-
-class runMovement(threading.Thread):
-
-    def __init__(self,function,*args):
-        threading.Thread.__init__(self)
-        self.function=function
-        self.args = args
-        self._running = True
-        self.start()
-
-    def terminate(self):  
-        self._running = False
-    
-    def get_active(self):
-        return self._running
-
-    def run(self):
-        while self._running:
-            self.function(*self.args)
-'''
 
 class Controller:
-
     def __init__(self):
         self.i2c = busio.I2C(SCL, SDA)
         self.pca0 = PCA9685(self.i2c, address=0x40)
@@ -113,7 +61,6 @@ class Controller:
                     self.servos[(j*3) + i] = servo.Servo(self.pca1.channels[ServPos[j][i]], min_pulse=500, max_pulse=2530)
                 self.servos[(j*3) + i].actuation_range = servMaxAngle[j][i]
 
-
         self.sRF = [self.servos[ 9], self.servos[10], self.servos[11]]
         self.sRM = [self.servos[ 3], self.servos[ 4], self.servos[ 5]]
         self.sRB = [self.servos[ 0], self.servos[ 1], self.servos[ 2]]
@@ -124,12 +71,8 @@ class Controller:
         
         self.sCamera = [self.servos[18], self.servos[19],self.servos[20]]
 
-        self.sLegs = [self.sRF,
-                      self.sRM,
-                      self.sRB,
-                      self.sLF,
-                      self.sLM,
-                      self.sLB]
+        self.sLegs = [self.sRF, self.sRM, self.sRB,
+                      self.sLF, self.sLM, self.sLB]
                       
         self.stripodR = [self.sRF,self.sRB,self.sLM]
         self.stripodL = [self.sLF,self.sLB,self.sRM]
